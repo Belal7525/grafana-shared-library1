@@ -13,13 +13,13 @@ def call(String configPath = 'config/prod.conf') {
         }
 
         stages {
-            stage('🧬 Clone Repo') {
+            stage(' Clone Repo') {
                 steps {
                     git url: 'https://github.com/your-org/ansible-grafana-setup.git'
                 }
             }
 
-            stage('⏳ User Approval') {
+            stage(' User Approval') {
                 when {
                     expression { return KEEP_APPROVAL.toBoolean() }
                 }
@@ -30,13 +30,13 @@ def call(String configPath = 'config/prod.conf') {
                 }
             }
 
-            stage('📦 Run Playbook') {
+            stage(' Run Playbook') {
                 steps {
                     sh "ansible-playbook ${CODE_PATH}/install-grafana.yml -i ${CODE_PATH}/inventory.ini"
                 }
             }
 
-            stage('📢 Notify') {
+            stage(' Notify') {
                 steps {
                     echo "Slack Notification to ${SLACK_CHANNEL}"
                 }
@@ -45,10 +45,10 @@ def call(String configPath = 'config/prod.conf') {
 
         post {
             success {
-                echo "✅ Grafana Deployed Successfully"
+                echo " Grafana Deployed Successfully"
             }
             failure {
-                echo "❌ Deployment Failed"
+                echo " Deployment Failed"
             }
         }
     }
