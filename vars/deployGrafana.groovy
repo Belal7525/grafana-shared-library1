@@ -1,42 +1,44 @@
 def call(String configPath = 'config/prod.conf') {
-    def config = readProperties file: "${libraryResource(configPath)}"
+    // Load the properties file from the shared library resources
+    def configText = libraryResource(configPath)
+    def config = readProperties text: configText
 
     pipeline {
         agent any
 
         environment {
-            SLACK_CHANNEL = "${config.SLACK_CHANNEL_NAME}"
-            ENVIRONMENT = "${config.ENVIRONMENT}"
-            CODE_PATH = "${config.CODE_BASE_PATH}"
-            MSG = "${config.ACTION_MESSAGE}"
-            KEEP_APPROVAL = "${config.KEEP_APPROVAL_STAGE}"
+            SLACK_CHANNEL = config.SLACK_CHANNEL_NAME ?: 'build-status'
+            ENVIRONMENT   = config.ENVIRONMENT ?: 'prod'
+            CODE_PATH     = config.CODE_BASE_PATH ?: 'env/prod'
+            MSG           = config.ACTION_MESSAGE ?: 'Approval Needed'
+            KEEP_APPROVAL = config.KEEP_APPROVAL_STAGE ?: 'true'
         }
 
         stages {
-            stage(' Clone Repo') {
+            stage('Clone Repo') {
                 steps {
                     git url: 'https://github.com/your-org/ansible-grafana-setup.git'
                 }
             }
 
-            stage(' User Approval') {
+            stage('User Approval') {
                 when {
                     expression { return KEEP_APPROVAL.toBoolean() }
                 }
                 steps {
                     timeout(time: 5, unit: 'MINUTES') {
-                        input message: "Approval required: ${MSG}"
+                        input message: "${MSG}"
                     }
                 }
             }
 
-            stage(' Run Playbook') {
+            stage('Run Playbook') {
                 steps {
                     sh "ansible-playbook ${CODE_PATH}/install-grafana.yml -i ${CODE_PATH}/inventory.ini"
                 }
             }
 
-            stage(' Notify') {
+            stage('Notify') {
                 steps {
                     echo "Slack Notification to ${SLACK_CHANNEL}"
                 }
@@ -45,10 +47,10 @@ def call(String configPath = 'config/prod.conf') {
 
         post {
             success {
-                echo " Grafana Deployed Successfully"
+                echo "Grafana Deployed Successfully"
             }
             failure {
-                echo " Deployment Failed"
+                echo "Deployment Failed"
             }
         }
     }
