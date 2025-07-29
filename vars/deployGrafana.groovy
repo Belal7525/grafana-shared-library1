@@ -12,7 +12,8 @@ pipeline {
     stages {
         stage('Clone Repo') {
             steps {
-                git branch: 'main', url: 'https://github.com/Belal7525/grafana-shared-library1.git'
+                git branch: 'main', url: 'git url: 'https://github.com/Belal7525/grafana-ansible-playbooks.git'
+'
             }
         }
 
