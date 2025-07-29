@@ -1,58 +1,63 @@
-pipeline {
-    agent any
+def call(String configPath = 'config/prod.conf') {
+    // Load config file
+    def configText = libraryResource(configPath)
+    def config = readProperties text: configText
 
-    environment {
-        ENVIRONMENT         = 'prod'
-        CODE_BASE_PATH      = 'env/prod'
-        ACTION_MESSAGE      = 'Approval Required'
-        KEEP_APPROVAL_STAGE = 'true'
-        EMAIL_TO            = 'mohammadbelal1803551@gmail.com'
-    }
+    pipeline {
+        agent any
 
-    stages {
-        stage('Clone Repo') {
-            steps {
-                git branch: 'main', url: 'https://github.com/Belal7525/grafana-ansible-playbooks.git'
-
-            }
+        environment {
+            ENVIRONMENT         = "${config.ENVIRONMENT ?: 'prod'}"
+            CODE_BASE_PATH      = "${config.CODE_BASE_PATH ?: 'env/prod'}"
+            ACTION_MESSAGE      = "${config.ACTION_MESSAGE ?: 'Approval Required'}"
+            KEEP_APPROVAL_STAGE = "${config.KEEP_APPROVAL_STAGE ?: 'true'}"
+            EMAIL_TO            = "${config.EMAIL_TO ?: 'mohammadbelal1803551@gmail.com'}"
         }
 
-        stage('User Approval') {
-            when {
-                expression { return env.KEEP_APPROVAL_STAGE == 'true' }
+        stages {
+            stage('Clone Repo') {
+                steps {
+                    git branch: 'main', url: 'https://github.com/Belal7525/grafana-ansible-playbooks.git'
+                }
             }
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    input message: "${env.ACTION_MESSAGE}"
+
+            stage('User Approval') {
+                when {
+                    expression { return KEEP_APPROVAL_STAGE.toBoolean() }
+                }
+                steps {
+                    timeout(time: 5, unit: 'MINUTES') {
+                        input message: "${ACTION_MESSAGE}"
+                    }
+                }
+            }
+
+            stage('Run Playbook') {
+                steps {
+                    sh "ansible-playbook ${CODE_BASE_PATH}/install-grafana.yml -i ${CODE_BASE_PATH}/inventory.ini"
+                }
+            }
+
+            stage('Notify') {
+                steps {
+                    emailext subject: "Grafana Deployment Status",
+                             body: "Grafana deployment has completed on environment: ${ENVIRONMENT}.",
+                             to: "${EMAIL_TO}"
                 }
             }
         }
 
-        stage('Run Playbook') {
-            steps {
-                sh "ansible-playbook ${env.CODE_BASE_PATH}/install-grafana.yml -i ${env.CODE_BASE_PATH}/inventory.ini"
+        post {
+            success {
+                emailext subject: "Grafana Deployed Successfully",
+                         body: "Grafana deployment was successful in environment: ${ENVIRONMENT}.",
+                         to: "${EMAIL_TO}"
             }
-        }
-
-        stage('Notify') {
-            steps {
-                emailext subject: "Grafana Deployment Status",
-                         body: "Grafana deployment completed on environment: ${env.ENVIRONMENT}.",
-                         to: "${env.EMAIL_TO}"
+            failure {
+                emailext subject: "Grafana Deployment Failed",
+                         body: "Grafana deployment failed in environment: ${ENVIRONMENT}. Check Jenkins logs.",
+                         to: "${EMAIL_TO}"
             }
-        }
-    }
-
-    post {
-        success {
-            emailext subject: "Grafana Deployed Successfully",
-                     body: "Grafana deployment was successful in environment: ${env.ENVIRONMENT}.",
-                     to: "${env.EMAIL_TO}"
-        }
-        failure {
-            emailext subject: "Grafana Deployment Failed",
-                     body: "Grafana deployment failed in environment: ${env.ENVIRONMENT}. Please check Jenkins console output.",
-                     to: "${env.EMAIL_TO}"
         }
     }
 }
