@@ -1,18 +1,26 @@
-package org.example
+pipeline {
+    agent any
 
-class Utils implements Serializable {
-    def steps
-    Utils(steps) {
-        this.steps = steps
-    }
+    stages {
+        stage('Init') {
+            steps {
+                script {
+                    // Safe dynamic assignments
+                    env.ENVIRONMENT = config.ENVIRONMENT ?: 'prod'
+                    env.CODE_BASE_PATH = config.CODE_BASE_PATH ?: 'env/prod'
+                    env.ACTION_MESSAGE = config.ACTION_MESSAGE ?: 'Approved'
+                    env.KEEP_APPROVAL_STAGE = config.KEEP_APPROVAL_STAGE ?: 'true'
+                    env.EMAIL_TO = config.EMAIL_TO ?: 'mohammadbelal1803551@gmail.com'
+                }
+            }
+        }
 
-    def notifyEmail(String subject, String message) {
-        def recipient = "mohammadbelal1803551@gmail.com"
-        steps.echo "Sending email to ${recipient} with subject: ${subject}"
-        steps.mail(
-            to: recipient,
-            subject: subject,
-            body: message
-        )
+        stage('Print Config') {
+            steps {
+                echo "Environment: ${env.ENVIRONMENT}"
+                echo "Base Path: ${env.CODE_BASE_PATH}"
+                echo "Email To: ${env.EMAIL_TO}"
+            }
+        }
     }
 }
