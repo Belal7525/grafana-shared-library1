@@ -6,9 +6,13 @@ class Utils implements Serializable {
         this.steps = steps
     }
 
-    def notifySlack(String channel, String message) {
-        steps.echo "Slack message to ${channel}: ${message}"
-        // Use slackSend here if Slack plugin is configured
-        // steps.slackSend(channel: channel, message: message)
+    def notifyEmail(String subject, String message) {
+        def recipient = "mohammadbelal1803551@gmail.com"
+        steps.echo "Sending email to ${recipient} with subject: ${subject}"
+        steps.mail(
+            to: recipient,
+            subject: subject,
+            body: message
+        )
     }
 }
