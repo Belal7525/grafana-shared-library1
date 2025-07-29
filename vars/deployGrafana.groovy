@@ -7,11 +7,11 @@ def call(String configPath = 'config/prod.conf') {
         agent any
 
         environment {
-            SLACK_CHANNEL = config.SLACK_CHANNEL_NAME ?: 'build-status'
             ENVIRONMENT   = config.ENVIRONMENT ?: 'prod'
             CODE_PATH     = config.CODE_BASE_PATH ?: 'env/prod'
             MSG           = config.ACTION_MESSAGE ?: 'Approval Needed'
             KEEP_APPROVAL = config.KEEP_APPROVAL_STAGE ?: 'true'
+            EMAIL_TO      = config.EMAIL_TO ?: 'mohammadbelal1803551@gmail.com'
         }
 
         stages {
@@ -40,17 +40,23 @@ def call(String configPath = 'config/prod.conf') {
 
             stage('Notify') {
                 steps {
-                    echo "Slack Notification to ${SLACK_CHANNEL}"
+                    emailext subject: "Grafana Deployment Status",
+                             body: "Grafana deployment process has completed on environment: ${ENVIRONMENT}. Check Jenkins console for details.",
+                             to: "${EMAIL_TO}"
                 }
             }
         }
 
         post {
             success {
-                echo "Grafana Deployed Successfully"
+                emailext subject: "Grafana Deployed Successfully",
+                         body: "Grafana deployment was successful in environment: ${ENVIRONMENT}.",
+                         to: "${EMAIL_TO}"
             }
             failure {
-                echo "Deployment Failed"
+                emailext subject: "Grafana Deployment Failed",
+                         body: "Grafana deployment failed in environment: ${ENVIRONMENT}. Please check Jenkins console output.",
+                         to: "${EMAIL_TO}"
             }
         }
     }
