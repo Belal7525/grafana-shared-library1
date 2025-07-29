@@ -12,8 +12,6 @@ def call(String configPath = 'config/prod.conf') {
     ACTION_MESSAGE     = "${config.ACTION_MESSAGE ?: 'Approval Required'}"
     KEEP_APPROVAL_STAGE = "${config.KEEP_APPROVAL_STAGE ?: 'true'}"
     EMAIL_TO           = "${config.EMAIL_TO ?: 'mohammadbelal1803551@gmail.com'}"
-}
-
         }
 
         stages {
