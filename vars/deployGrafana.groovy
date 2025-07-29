@@ -6,12 +6,14 @@ def call(String configPath = 'config/prod.conf') {
     pipeline {
         agent any
 
-        environment {
-            ENVIRONMENT   = config.ENVIRONMENT ?: 'prod'
-            CODE_PATH     = config.CODE_BASE_PATH ?: 'env/prod'
-            MSG           = config.ACTION_MESSAGE ?: 'Approval Needed'
-            KEEP_APPROVAL = config.KEEP_APPROVAL_STAGE ?: 'true'
-            EMAIL_TO      = config.EMAIL_TO ?: 'mohammadbelal1803551@gmail.com'
+    environment {
+    ENVIRONMENT        = "${config.ENVIRONMENT ?: 'prod'}"
+    CODE_BASE_PATH     = "${config.CODE_BASE_PATH ?: 'env/prod'}"
+    ACTION_MESSAGE     = "${config.ACTION_MESSAGE ?: 'Approval Required'}"
+    KEEP_APPROVAL_STAGE = "${config.KEEP_APPROVAL_STAGE ?: 'true'}"
+    EMAIL_TO           = "${config.EMAIL_TO ?: 'mohammadbelal1803551@gmail.com'}"
+}
+
         }
 
         stages {
