@@ -7,6 +7,7 @@ pipeline {
         ACTION_MESSAGE      = 'Approval Required'
         KEEP_APPROVAL_STAGE = 'true'
         EMAIL_TO            = 'mohammadbelal1803551@gmail.com'
+        ANSIBLE_HOST_KEY_CHECKING = 'False'  // disables strict host key checking
     }
 
     stages {
@@ -29,7 +30,10 @@ pipeline {
 
         stage('Run Playbook') {
             steps {
-                sh "ansible-playbook ${env.CODE_BASE_PATH}/install-grafana.yml -i ${env.CODE_BASE_PATH}/inventory.ini"
+                // Use Jenkins credential with ID 'grafana-key' for SSH
+                sshagent(['grafana-key']) {
+                    sh "ansible-playbook ${env.CODE_BASE_PATH}/install-grafana.yml -i ${env.CODE_BASE_PATH}/inventory.ini"
+                }
             }
         }
 
